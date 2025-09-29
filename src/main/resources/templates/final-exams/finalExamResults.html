@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html class="no-js" lang="bg" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <meta content="ie=edge" http-equiv="x-ua-compatible">
+    <title>LangForU | Резултат от финален изпит</title>
+    <meta content="Резултати от финален изпит в LangForU." name="description">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
+    <link href="/img/logo/logo.ico" rel="icon" type="image/x-icon">
+
+    <!-- Stylesheets -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/css/owl.carousel.min.css" rel="stylesheet">
+    <link href="/css/slicknav.css" rel="stylesheet">
+    <link href="/css/animate.min.css" rel="stylesheet">
+    <link href="/css/custom-images.css" rel="stylesheet">
+    <link href="/css/hamburgers.min.css" rel="stylesheet">
+    <link href="/css/magnific-popup.css" rel="stylesheet">
+    <link href="/css/fontawesome-all.min.css" rel="stylesheet">
+    <link href="/css/themify-icons.css" rel="stylesheet">
+    <link href="/css/slick.css" rel="stylesheet">
+    <link href="/css/nice-select.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@latest/dist/confetti.browser.min.js"></script>
+</head>
+
+<body>
+<!-- Preloader -->
+<div id="preloader-active">
+    <div class="preloader d-flex align-items-center justify-content-center">
+        <div class="preloader-inner position-relative">
+            <div class="preloader-circle"></div>
+            <div class="preloader-img pere-text">
+                <img alt="Зареждане..." src="/img/logo/loder_black.png">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Navigation -->
+<header th:replace="~{fragments/navigation}"></header>
+
+<!-- Main Content -->
+<main>
+    <section class="sample-text-area">
+        <div class="container box_1170">
+            <h3 class="mb-30">Финален изпит - резултати</h3>
+
+            <p>Затворени въпроси: <strong th:text="${result.multipleChoiceScore} + '/15'"></strong></p>
+            <p>Отворени въпроси: <strong th:text="${result.openEndedScore} + '/30'"></strong></p>
+            <p>Есе: <strong th:text="${result.essayScore} + '/30'"></strong></p>
+            <hr>
+            <p>Обща оценка: <strong th:text="${result.finalScore} + '/75'"></strong></p>
+
+            <!-- Оценка -->
+            <p><strong>Оценка:</strong>
+                <span class="text-success" th:if="${result.finalScore >= 70}">Отличен (5.50 - 6.00) 🎉</span>
+                <span class="text-primary" th:if="${result.finalScore >= 63 && result.finalScore < 70}">Мн. добър (4.50 - 5.49) 👍</span>
+                <span class="text-warning" th:if="${result.finalScore >= 54 && result.finalScore < 63}">Добър (3.50 - 4.49) 🙂</span>
+                <span class="text-danger" th:if="${result.finalScore >= 45 && result.finalScore < 54}">Среден (3.00 - 3.49) 😕</span>
+                <span class="text-dark" th:if="${result.finalScore < 45}">Слаб (до 2.99) 😞</span>
+            </p>
+
+            <!-- Статус -->
+            <p><strong>Статус:</strong>
+                <span class="text-success" th:if="${result.passed}">Преминат ✅</span>
+                <span class="text-danger" th:unless="${result.passed}">Неуспешен ❌</span>
+            </p>
+
+            <!-- Обратна връзка -->
+            <div class="mt-4">
+                <h5>Обратна връзка по есето:</h5>
+                <blockquote class="generic-blockquote" th:text="${essayFeedback}"></blockquote>
+            </div>
+
+            <!-- Certificate Download -->
+            <div class="mt-4" th:if="${shouldDownload}">
+                <button aria-label="Изтегли сертификат" class="btn btn-primary" id="downloadCertificateBtn">Изтегли
+                    сертификат
+                </button>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Footer -->
+<footer th:replace="~{fragments/footer}"></footer>
+
+<!-- Scroll to top -->
+<div id="back-top">
+    <a href="#" title="Обратно в началото"> <i class="fas fa-level-up-alt"></i></a>
+</div>
+
+<!-- Scripts -->
+<script th:replace="~{fragments/script}"></script>
+
+<!-- Confetti on pass + Certificate download logic -->
+<script th:inline="javascript">
+    document.addEventListener("DOMContentLoaded", () => {
+        // Правилно инициализиране на променливите от модела на Thymeleaf
+        const passed = /*[[${result.passed}]]*/ false;
+        const examId = /*[[${result.finalExam.id}]]*/ 0;
+        const shouldDownload = /*[[${shouldDownload}]]*/ false;
+
+        // Конфети при успешно преминат изпит
+        if (passed) {
+            confetti({
+                particleCount: 120,
+                spread: 90,
+                origin: { y: 0.6 }
+            });
+        }
+
+        // Добавяне на event listener към бутона за изтегляне
+        const downloadBtn = document.getElementById("downloadCertificateBtn");
+        if (downloadBtn) {
+            downloadBtn.addEventListener("click", () => {
+                downloadCertificate(examId);
+            });
+        }
+
+        // Автоматично изтегляне на сертификата при зареждане на страницата
+        if (shouldDownload) {
+            downloadCertificate(examId);
+        }
+    });
+
+    function downloadCertificate(examId) {
+        fetch(`/final-exams/${examId}/certificate`, {
+            method: "GET",
+            headers: {
+                "Accept": "application/pdf"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Грешка при получаването на сертификата.");
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            if (blob.size === 0) {
+                throw new Error("Полученият файл е празен.");
+            }
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = "certificate.pdf";
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        })
+        .catch(error => {
+            console.error("Грешка при свалянето на сертификата:", error);
+            alert("Неуспешно изтегляне на сертификата. Моля, опитайте отново.");
+        });
+    }
+</script>
+</body>
+</html>

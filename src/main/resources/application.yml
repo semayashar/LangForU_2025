@@ -1,0 +1,55 @@
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+
+spring:
+  datasource:
+    password: {password}
+    url: {someURL}
+    username: postgres
+    profiles:
+      active: default
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  resources:
+    static-locations: classpath:/static/
+  mvc:
+    format:
+      date: dd/MM/yyyy
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: {email}
+    password: {secretKeyForEmail}
+
+    properties:
+      mail:
+        smtp:
+          ssl:
+            trust: "*"
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 3000
+          writetimeout: 5000
+
+openai:
+  api:
+    key: {secretKeyForOpenAI}
+    url: https://api.openai.com/v1
+
+encryption:
+  key: '{key}'
+  salt: '{salt}'
